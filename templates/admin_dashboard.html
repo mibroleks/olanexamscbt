@@ -1,141 +1,171 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: sans-serif;
-            background-color: #f4f6f7;
-            margin: 0;
-        }
-        .header {
-            background-color: #2E86DE;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            padding: 1rem;
-        }
-        form, table {
-            background: white;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 8px;
-        }
-        input, select {
-            width: 100%;
-            padding: 0.5rem;
-            margin: 0.5rem 0;
-        }
-        button {
-            padding: 0.6rem 1rem;
-            border: none;
-            border-radius: 4px;
-            background-color: #2E86DE;
-            color: white;
-            cursor: pointer;
-        }
-        button.delete {
-            background-color: #e74c3c;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-        th {
-            background-color: #2E86DE;
-            color: white;
-        }
-    </style>
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f9fb; margin: 0; }
+    .header { background: #2E86DE; color: white; text-align: center; padding: 1rem; }
+    .container { max-width: 900px; margin: auto; padding: 1rem; }
+    section { background: white; padding: 1rem; margin-top: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    h2 { color: #2E86DE; margin-top: 0; }
+    input, select, button { width: 100%; padding: 0.6rem; margin-top: 0.5rem; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #2E86DE; color: white; border: none; cursor: pointer; }
+    button.delete { background: #e74c3c; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td { padding: 0.75rem; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background-color: #2E86DE; color: white; }
+    .pagination { text-align: center; margin-top: 1rem; }
+    .pagination a { padding: 5px 10px; border: 1px solid #2E86DE; color: #2E86DE; border-radius: 4px; margin: 0 3px; text-decoration: none; }
+    .pagination a.active, .pagination a:hover { background: #2E86DE; color: white; }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Admin Dashboard</h1>
-    </div>
+  <div class="header">
+    <h1>Admin Dashboard</h1>
+  </div>
 
-    <div class="container">
-        {% if msg %}
-        <div style="background-color:#dff0d8; padding:10px; border-radius:5px; margin-bottom:1rem;">
-            {{ msg }}
-        </div>
-        {% endif %}
+  <div class="container">
 
-        <h2>Upload New Form Link</h2>
-        <form method="post" action="/admin/upload_link">
-            <input type="text" name="name" placeholder="Form Name / Subject" required>
-            <input type="url" name="link" placeholder="Form Link URL" required>
-            <button type="submit">Upload Link</button>
-        </form>
+    <!-- 🔹 Class Filter -->
+    <section>
+      <h2>Select Class</h2>
+      <form method="get" action="/admin/dashboard">
+        <select name="class_name" onchange="this.form.submit()">
+          {% for c in classes %}
+            <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </section>
 
-        <h2>Set Active Link</h2>
-        <form method="post" action="/admin/set_active_link">
-            <select name="link_id">
-                {% for link in links %}
-                <option value="{{ link[0] }}" {% if link[3] == 1 %}selected{% endif %}>{{ link[1] }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit">Set Active</button>
-        </form>
+    <!-- 1️⃣ Upload New Form Link -->
+    <section>
+      <h2>1. Upload New Form Link</h2>
+      <form method="post" action="/admin/upload_link">
+        <input type="text" name="name" placeholder="Form Name / Subject" required>
+        <input type="url" name="link" placeholder="Form Link URL" required>
+        <select name="class_name" required>
+          {% for c in classes %}
+            <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        <button>Upload Link</button>
+      </form>
+    </section>
 
-        <h2>Upload Students (CSV)</h2>
-        <form method="post" action="/admin/upload_csv" enctype="multipart/form-data">
-            <input type="file" name="csv_file" accept=".csv" required>
-            <button type="submit">Upload CSV</button>
-        </form>
+    <!-- 2️⃣ Set Active Link -->
+    <section>
+      <h2>2. Set Active Link for {{ selected_class or 'All Classes' }}</h2>
+      <form method="post" action="/admin/set_active_link">
+        <select name="link_id">
+          {% for link in links %}
+            <option value="{{ link['id'] }}" {% if link['is_active'] == 1 %}selected{% endif %}>
+              {{ link['name'] }}
+            </option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="class_name" value="{{ selected_class }}">
+        <button>Set Active</button>
+      </form>
+    </section>
 
-        <h2>Student List</h2>
-        <form method="post" action="/admin/delete_all_students" onsubmit="return confirm('Delete all students?');">
-            <button type="submit" class="delete">Delete All</button>
-        </form>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Admission Number</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if students|length == 0 %}
-                <tr><td colspan="3">No students uploaded.</td></tr>
-                {% else %}
-                {% for student in students %}
-                <tr>
-                    <td>{{ student[1] }}</td>
-                    <td>{{ student[2] }}</td>
-                    <td>
-                        <form method="post" action="/admin/delete_student" onsubmit="return confirm('Delete this student?');">
-                            <input type="hidden" name="admission_number" value="{{ student[2] }}">
-                            <button type="submit" class="delete">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
-
-        <h2>All Uploaded Links</h2>
+    <!-- 3️⃣ All Uploaded Links -->
+    <section>
+      <h2>3. All Uploaded Links ({{ selected_class or 'All' }})</h2>
+      {% if links|length == 0 %}
+        <p>No links found.</p>
+      {% else %}
         <ul>
-            {% for link in links %}
+          {% for link in links %}
             <li>
-                <strong>{{ link[1] }}</strong> - 
-                <a href="{{ link[2] }}" target="_blank">{{ link[2] }}</a>
-                {% if link[3] == 1 %}
-                <span style="color: green;">(Active)</span>
-                {% endif %}
+              <b>{{ link['name'] }}</b> — 
+              <a href="{{ link['url'] }}" target="_blank">{{ link['url'] }}</a>
+              {% if link['is_active'] == 1 %}<span style="color:green;">(Active)</span>{% endif %}
             </li>
-            {% endfor %}
+          {% endfor %}
         </ul>
-    </div>
+        <div class="pagination">
+          {% for i in range(1, total_pages_links + 1) %}
+          <a href="?page={{ i }}{% if selected_class %}&class_name={{ selected_class }}{% endif %}" class="{% if i == page %}active{% endif %}">{{ i }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- 4️⃣ Upload CSV -->
+    <section>
+      <h2>4. Upload Students (CSV)</h2>
+      <form method="post" action="/admin/upload_csv" enctype="multipart/form-data">
+        <input type="file" name="csv_file" accept=".csv" required>
+        <button>Upload</button>
+      </form>
+    </section>
+
+    <!-- 5️⃣ Add Student -->
+    <section>
+      <h2>5. Add Student</h2>
+      <form method="post" action="/admin/add_student">
+        <input type="text" name="name" placeholder="Student Name" required>
+        <input type="text" name="admission_number" placeholder="Admission Number" required>
+        <select name="class_name" required>
+          {% for c in classes %}
+            <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        <button>Add</button>
+      </form>
+    </section>
+
+    <!-- 6️⃣ Student List -->
+    <section>
+      <h2>6. Students in {{ selected_class or 'All Classes' }}</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Admission No</th><th>Class</th><th>Action</th></tr></thead>
+        <tbody>
+          {% if students|length == 0 %}
+          <tr><td colspan="4">No students found.</td></tr>
+          {% else %}
+          {% for student in students %}
+          <tr>
+            <td>{{ student['name'] }}</td>
+            <td>{{ student['admission_number'] }}</td>
+            <td>{{ student['class_name'] }}</td>
+            <td>
+              <form method="post" action="/admin/delete_student" onsubmit="return confirm('Delete student?');">
+                <input type="hidden" name="admission_number" value="{{ student['admission_number'] }}">
+                <button class="delete">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        {% for i in range(1, total_pages_students + 1) %}
+        <a href="?page={{ i }}{% if selected_class %}&class_name={{ selected_class }}{% endif %}" class="{% if i == page %}active{% endif %}">{{ i }}</a>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- 7️⃣ Placeholder -->
+    <section><h2>7. Activation Management</h2><p>Feature toggle placeholder.</p></section>
+
+    <!-- 8️⃣ Logs -->
+    <section><h2>8. System Logs</h2><p>Future: track uploads, deletions, activations.</p></section>
+
+    <!-- 9️⃣ Export -->
+    <section><h2>9. Export / Backup</h2><p>Will allow export to CSV or PDF later.</p></section>
+
+    <!-- 🔟 Logout -->
+    <section>
+      <h2>10. Logout</h2>
+      <form method="get" action="/admin/logout">
+        <button>Logout</button>
+      </form>
+    </section>
+
+  </div>
 </body>
 </html>
