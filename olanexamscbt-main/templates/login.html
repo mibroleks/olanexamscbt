@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Login | OLAN ACADEMY</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --primary-color: #8B1C2E;
+            --bg-color: #f4f6fa;
+            --text-color: #333;
+            --font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            max-width: 420px;
+            width: 90%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+        }
+
+        .title {
+            color: var(--primary-color);
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        form input[type="text"],
+        form input[type="submit"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 6px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #660e1f;
+        }
+
+        .error {
+            color: red;
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #777;
+            padding: 1rem 0;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 1.5rem;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="/static/student_logo.png" alt="OLAN ACADEMY Logo" class="logo">
+        <div class="title">OLAN ACADEMY Student Portal</div>
+
+        <div id="error" class="error"></div>
+
+        <form id="loginForm">
+            <input type="text" name="admission_number" id="admission_number" placeholder="Enter Admission Number" required>
+            <input type="submit" value="Access Test or Exam">
+        </form>
+    </div>
+
+    <footer>
+        Powered by Ygracetec. All rights reserved © 2025
+    </footer>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const admissionNumber = document.getElementById("admission_number").value;
+
+            try {
+                const response = await fetch("/student_login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ admission_number: admissionNumber })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.form_link) {
+                        window.open(data.form_link, "_blank");
+                    } else {
+                        document.getElementById("error").innerText = "No form link set by admin.";
+                    }
+                } else {
+                    const error = await response.json();
+                    document.getElementById("error").innerText = error.detail || "Login failed.";
+                }
+            } catch (err) {
+                document.getElementById("error").innerText = "Server error.";
+            }
+        });
+    </script>
+</body>
+</html>
